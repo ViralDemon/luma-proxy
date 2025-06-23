@@ -1,183 +1,22 @@
 {
-  "name": "luma-api-proxy",
+  "name": "luma-proxy",
   "version": "1.0.0",
-  "description": "API proxy server for Luma Dream Machine API",
+  "description": "Proxy server for Luma AI API calls",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "echo 'No build step required'"
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
+    "cors": "^2.8.5",
     "axios": "^1.6.0",
-    "cors": "^2.8.5"
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   }
-}// Luma API Proxy Server
-// This proxy handles the API calls to Luma and returns clean responses to n8n
-
-const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Your Luma API Key
-const LUMA_API_KEY = 'luma-a26195ef-b942-449a-a4e5-88ba32eeb417-2a660457-a833-405d-93f8-66dfeb151370';
-
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.json({ status: 'Luma Proxy Server Running', timestamp: new Date().toISOString() });
-});
-
-// Generate video endpoint
-app.post('/generate-video', async (req, res) => {
-  try {
-    console.log('Received request:', req.body);
-    
-    // Extract prompt from request (flexible input)
-    const prompt = req.body.prompt || req.body.text || req.body.description || 'A beautiful landscape';
-    const aspectRatio = req.body.aspect_ratio || req.body.aspectRatio || '16:9';
-    const loop = req.body.loop !== undefined ? req.body.loop : true;
-    
-    // Prepare Luma API request
-    const lumaRequest = {
-      prompt: prompt,
-      aspect_ratio: aspectRatio,
-      loop: loop
-    };
-    
-    console.log('Sending to Luma:', lumaRequest);
-    
-    // Call Luma API
-    const response = await axios.post(
-      'https://api.lumalabs.ai/dream-machine/v1/generations',
-      lumaRequest,
-      {
-        headers: {
-          'Authorization': `Bearer ${LUMA_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 30000 // 30 second timeout
-      }
-    );
-    
-    console.log('Luma response:', response.data);
-    
-    // Return clean response to n8n
-    res.json({
-      success: true,
-      generation_id: response.data.id,
-      status: response.data.state || 'queued',
-      data: response.data,
-      message: 'Video generation started successfully'
-    });
-    
-  } catch (error) {
-    console.error('Error calling Luma API:', error.response?.data || error.message);
-    
-    res.status(500).json({
-      success: false,
-      error: error.response?.data || error.message,
-      message: 'Failed to generate video',
-      details: {
-        status: error.response?.status,
-        statusText: error.response?.statusText
-      }
-    });
-  }
-});
-
-// Check video status endpoint
-app.get('/check-status/:generationId', async (req, res) => {
-  try {
-    const { generationId } = req.params;
-    
-    console.log('Checking status for:', generationId);
-    
-    const response = await axios.get(
-      `https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${LUMA_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    console.log('Status response:', response.data);
-    
-    res.json({
-      success: true,
-      generation_id: generationId,
-      status: response.data.state,
-      video_url: response.data.assets?.video || null,
-      data: response.data
-    });
-    
-  } catch (error) {
-    console.error('Error checking status:', error.response?.data || error.message);
-    
-    res.status(500).json({
-      success: false,
-      error: error.response?.data || error.message,
-      message: 'Failed to check video status'
-    });
-  }
-});
-
-// List all generations endpoint
-app.get('/generations', async (req, res) => {
-  try {
-    const response = await axios.get(
-      'https://api.lumalabs.ai/dream-machine/v1/generations',
-      {
-        headers: {
-          'Authorization': `Bearer ${LUMA_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    res.json({
-      success: true,
-      generations: response.data
-    });
-    
-  } catch (error) {
-    console.error('Error listing generations:', error.response?.data || error.message);
-    
-    res.status(500).json({
-      success: false,
-      error: error.response?.data || error.message,
-      message: 'Failed to list generations'
-    });
-  }
-});
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error('Unhandled error:', error);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error',
-    message: error.message
-  });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Luma Proxy Server running on port ${PORT}`);
-  console.log(`📋 Endpoints:`);
-  console.log(`   GET  /                           - Health check`);
-  console.log(`   POST /generate-video             - Generate video`);
-  console.log(`   GET  /check-status/:generationId - Check video status`);
-  console.log(`   GET  /generations                - List all generations`);
-})
+}
