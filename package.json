@@ -1,4 +1,21 @@
-// Luma API Proxy Server
+{
+  "name": "luma-api-proxy",
+  "version": "1.0.0",
+  "description": "API proxy server for Luma Dream Machine API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'No build step required'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}// Luma API Proxy Server
 // This proxy handles the API calls to Luma and returns clean responses to n8n
 
 const express = require('express');
